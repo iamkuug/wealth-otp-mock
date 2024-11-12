@@ -9,7 +9,7 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
-public class MetaRequest {
+public class WhatsappRequest {
     private String messaging_product;
     private String recipient_type;
     private String to;
