@@ -7,4 +7,6 @@ import java.util.UUID;
 
 public interface OtpRepository extends JpaRepository<Otp, UUID> {
     Otp findByAccountPhoneNumber(String phoneNumber);
+
+    void deleteByAccountId(UUID accountId);
 }

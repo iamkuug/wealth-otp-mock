@@ -11,6 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -38,8 +39,14 @@ public class OtpService {
         return otpRepository.findByAccountPhoneNumber(phoneNumber);
     }
 
+    @Transactional
     public void deleteOtp(UUID id) {
         otpRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void deleteOtpByAccountId(UUID accountId) {
+        otpRepository.deleteByAccountId(accountId);
     }
 
     public String generateOtp() {
@@ -141,12 +148,12 @@ public class OtpService {
                 .build();
 
         HttpEntity<WhatsappRequest> requestEntity = new HttpEntity<>(whatsappRequest, headers);
-        ResponseEntity<String> responseEntity = new ResponseEntity<>(null, null, 400);
+        // ResponseEntity<String> responseEntity = new ResponseEntity<>(null, null, 400);
 
         // Send request
         try {
             URI uri = new URI(endpointURL);
-            responseEntity = restTemplate.exchange(
+            restTemplate.exchange(
                     uri, HttpMethod.POST,
                     requestEntity,
                     String.class);

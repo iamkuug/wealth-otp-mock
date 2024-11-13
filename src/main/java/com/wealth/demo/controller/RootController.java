@@ -1,31 +1,18 @@
 package com.wealth.demo.controller;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import com.wealth.demo.dto.GenericResponse;
-import com.wealth.demo.dto.WhatsappRequest;
 import com.wealth.demo.dto.RegisterRequest;
-import com.wealth.demo.dto.RegisterResponse;
 import com.wealth.demo.dto.VerifyRequest;
 import com.wealth.demo.entity.Account;
 import com.wealth.demo.entity.Otp;
@@ -89,19 +76,32 @@ public class RootController {
         }
 
         @PostMapping("/login")
-        public String loginUser(@RequestBody RegisterRequest request) {
-                return "User has been logged in";
+        public ResponseEntity<GenericResponse> loginUser(@RequestBody RegisterRequest request) {
+                String phoneNumber = request.getPhoneNumber();
+                Account account = accountService.getAccountByPhoneNumber(phoneNumber);
+                final String messageEndpointURL = baseURL + businessId.trim() + "/messages";
+
+                if (account == null) {
+                        GenericResponse response = new GenericResponse("No account found with this phone number");
+                        return new ResponseEntity<GenericResponse>(response, HttpStatus.NOT_FOUND);
+                }
+
+                Otp newOtp = new Otp(otpService.generateOtp(), account);
+                otpService.deleteOtpByAccountId(account.getId());
+                otpService.saveOtp(newOtp);
+
+                ResponseEntity<String> messageEndpointResponse = otpService.sendOtpTemplate(newOtp.getOtp(),
+                                phoneNumber, messageEndpointURL);
+
+                if (messageEndpointResponse.getStatusCode() != HttpStatus.OK) {
+                        GenericResponse response = new GenericResponse("Failed to send OTP");
+                        return new ResponseEntity<GenericResponse>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+
+                GenericResponse response = new GenericResponse("OTP sent successfully. Check Whatsapp for OTP");
+                return new ResponseEntity<GenericResponse>(response, HttpStatus.OK);
         }
 
-        @PostMapping("/resend-otp")
-        public String resendOtp(@RequestBody RegisterRequest request) {
-                return "OTP has been resent";
-        }
-
-        @PostMapping("/check-phone-number")
-        public String checkPhoneNumber() {
-                return "Phone number is not registered";
-        }
 
         @PostMapping("/verify-otp")
         public ResponseEntity<GenericResponse> verifyOtp(@RequestBody VerifyRequest request) {
@@ -112,7 +112,7 @@ public class RootController {
                 Otp otpExpected = otpService.getOtpByPhoneNumber(phoneNumber);
 
                 if (otpExpected == null) {
-                        GenericResponse response = new GenericResponse("OTP not found");
+                        GenericResponse response = new GenericResponse("OTP not found/Accout not found");
                         return new ResponseEntity<GenericResponse>(response, HttpStatus.NOT_FOUND);
                 }
 
@@ -127,6 +127,7 @@ public class RootController {
                 }
 
                 if (!otpGot.equals(otpExpected.getOtp())) {
+                        otpService.deleteOtp(otpExpected.getId());
                         GenericResponse response = new GenericResponse("OTP is incorrect");
                         return new ResponseEntity<GenericResponse>(response, HttpStatus.BAD_REQUEST);
                 }

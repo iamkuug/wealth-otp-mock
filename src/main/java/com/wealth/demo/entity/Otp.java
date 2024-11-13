@@ -12,6 +12,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @Entity
+@Table(name = "otp", uniqueConstraints = @UniqueConstraint(columnNames = "account_id"))
 public class Otp {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -19,7 +20,7 @@ public class Otp {
     private String otp;
 
     @ManyToOne
-    @JoinColumn(name = "account_id", nullable = false, unique = true)
+    @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
     @Temporal(TemporalType.TIMESTAMP)
