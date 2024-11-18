@@ -1,12 +1,12 @@
 package com.wealth.demo.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class VerifyRequest {
-
+@AllArgsConstructor
+public class GenerateResponse {
     private String token;
-    private String otpCode;
 }

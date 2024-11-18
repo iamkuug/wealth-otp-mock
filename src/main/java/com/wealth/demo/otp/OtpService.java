@@ -1,7 +1,8 @@
-package com.wealth.demo.service;
+package com.wealth.demo.otp;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.SecureRandom;
 import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,13 +12,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.wealth.demo.dto.WhatsappRequest;
-import com.wealth.demo.entity.Otp;
-import com.wealth.demo.repository.OtpRepository;
+import com.wealth.demo.ex.BadRequestException;
 
 @Service
 public class OtpService {
@@ -31,35 +30,61 @@ public class OtpService {
     @Value("${spring.wapp.access.token}")
     private String accessToken;
 
+    @Value("${spring.wapp.business.id}")
+    private String businessId;
+
+    @Value("${spring.wapp.api.url}")
+    private String baseURL;
+
+    public Otp getOtp(String token, String otpCode) {
+        Otp otp = otpRepository.findById(new OtpId(otpCode, token)).orElse(null);
+        
+        System.out.println(otp);
+
+        if (otp == null) {
+            throw new BadRequestException("Invalid Token or OTP Code");
+        }
+
+        return otp;
+    }
+
     public Otp saveOtp(Otp otp) {
         return otpRepository.save(otp);
     }
 
-    public Otp getOtpByPhoneNumber(String phoneNumber) {
-        return otpRepository.findByAccountPhoneNumber(phoneNumber);
+    public String generateOtpCode(int length) {
+        SecureRandom random = new SecureRandom();
+        StringBuilder otpCode = new StringBuilder(length);
+
+        for (int i = 0; i < length; i++) {
+            otpCode.append(random.nextInt(10));
+        }
+
+        return otpCode.toString();
     }
 
-    @Transactional
-    public void deleteOtp(UUID id) {
-        otpRepository.deleteById(id);
+    public String generateToken() {
+        UUID uuid = UUID.randomUUID();
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(uuid.toString().getBytes());
     }
 
-    @Transactional
-    public void deleteOtpByAccountId(UUID accountId) {
-        otpRepository.deleteByAccountId(accountId);
+    public Date generateExpiryDate(int minutes) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MINUTE, minutes);
+        return calendar.getTime();
     }
 
-    public String generateOtp() {
-        Random random = new Random();
-        int otp = 1000 + random.nextInt(9000); // Generates a random number between 1000 and 9999
-        return String.valueOf(otp);
+    public void sendOtp(String phoneNumber, String otpCode) {
+        this.sendOtpAuthTemplate(otpCode, phoneNumber);
     }
 
-    public Boolean isPhoneNumberRegisteredOnWhatsapp(String phoneNumber, String endpointURL) {
-        return this.sendVerifyTemplate(phoneNumber, endpointURL);
+    public boolean isPhoneNumberRegisteredOnWhatsapp(String phoneNumber) {
+        return this.sendVerifyTemplate(phoneNumber);
     }
 
-    public ResponseEntity<String> sendOtpTemplate(String otp, String phoneNumber, String endpointURL) {
+    private ResponseEntity<?> sendOtpAuthTemplate(String otpCode, String phoneNumber) {
+        final String endpointURL = baseURL + businessId.trim() + "/messages";
+
         // Set headers
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + accessToken.trim());
@@ -83,7 +108,7 @@ public class OtpService {
                                                 WhatsappRequest.Template.Component.Parameter
                                                         .builder()
                                                         .type("text")
-                                                        .text(otp)
+                                                        .text(otpCode)
                                                         .build()))
                                         .build(),
                                 WhatsappRequest.Template.Component.builder()
@@ -94,14 +119,16 @@ public class OtpService {
                                                 WhatsappRequest.Template.Component.Parameter
                                                         .builder()
                                                         .type("text")
-                                                        .text(otp)
+                                                        .text(otpCode)
                                                         .build()))
                                         .build()))
                         .build())
                 .build();
 
-        HttpEntity<WhatsappRequest> requestEntity = new HttpEntity<>(whatsappRequest, headers);
-        ResponseEntity<String> responseEntity = new ResponseEntity<>(null, null, 400);
+        HttpEntity<WhatsappRequest> requestEntity = new HttpEntity<>(whatsappRequest,
+                headers);
+        ResponseEntity<String> responseEntity = new ResponseEntity<>(null, null,
+                400);
 
         // Send request
         try {
@@ -122,7 +149,9 @@ public class OtpService {
         return responseEntity;
     }
 
-    public boolean sendVerifyTemplate(String phoneNumber, String endpointURL) {
+    private boolean sendVerifyTemplate(String phoneNumber) {
+        final String endpointURL = baseURL + businessId.trim() + "/messages";
+
         // Set headers
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + accessToken.trim());
@@ -147,8 +176,8 @@ public class OtpService {
                         .build())
                 .build();
 
-        HttpEntity<WhatsappRequest> requestEntity = new HttpEntity<>(whatsappRequest, headers);
-        // ResponseEntity<String> responseEntity = new ResponseEntity<>(null, null, 400);
+        HttpEntity<WhatsappRequest> requestEntity = new HttpEntity<>(whatsappRequest,
+                headers);
 
         // Send request
         try {
