@@ -10,13 +10,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.wealth.demo.dto.WhatsappRequest;
 import com.wealth.demo.ex.BadRequestException;
+import com.wealth.demo.ex.OtpSendingException;
 
 @Service
 public class OtpService {
@@ -37,9 +40,7 @@ public class OtpService {
     private String baseURL;
 
     public Otp getOtp(String token, String otpCode) {
-        Otp otp = otpRepository.findById(new OtpId(otpCode, token)).orElse(null);
-        
-        System.out.println(otp);
+        Otp otp = otpRepository.findMostRecentOtp(token, otpCode);
 
         if (otp == null) {
             throw new BadRequestException("Invalid Token or OTP Code");
@@ -127,26 +128,49 @@ public class OtpService {
 
         HttpEntity<WhatsappRequest> requestEntity = new HttpEntity<>(whatsappRequest,
                 headers);
-        ResponseEntity<String> responseEntity = new ResponseEntity<>(null, null,
-                400);
 
         // Send request
         try {
-            URI uri = new URI(endpointURL);
-            responseEntity = restTemplate.exchange(
-                    uri, HttpMethod.POST,
+            ResponseEntity<String> responseEntity = restTemplate.exchange(
+                    new URI(endpointURL),
+                    HttpMethod.POST,
                     requestEntity,
                     String.class);
 
+            System.out.println(responseEntity.getStatusCode());
+
+            if (responseEntity.getStatusCode() == HttpStatus.OK) {
+                return responseEntity;
+            } else {
+                throw new OtpSendingException("Failed to send OTP: " + responseEntity.getBody());
+            }
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.BAD_REQUEST) {
+                throw new OtpSendingException("Bad request: " + "Recepient phone number is not in allowed list");
+            } else if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                throw new OtpSendingException("Sending Service: Unauthorized - " + e.getResponseBodyAsString());
+            } else if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
+                throw new OtpSendingException("Sending Service: Forbidden - " + e.getResponseBodyAsString());
+            } else if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                throw new OtpSendingException("Sending Service: Not found - " + e.getResponseBodyAsString());
+            } else if (e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
+                throw new OtpSendingException("Sending Service: Too many requests - " + e.getResponseBodyAsString());
+            } else if (e.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR) {
+                throw new OtpSendingException(
+                        "Sending Service: Internal server error - " + e.getResponseBodyAsString());
+            } else if (e.getStatusCode() == HttpStatus.BAD_GATEWAY) {
+                throw new OtpSendingException("Sending Service: Bad gateway - " + e.getResponseBodyAsString());
+            } else if (e.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
+                throw new OtpSendingException("Sending Service: Service unavailable - " + e.getResponseBodyAsString());
+            } else {
+                throw new OtpSendingException("Sending Service: Error sending OTP - " + e.getResponseBodyAsString());
+            }
         } catch (RestClientException rce) {
-            System.out.println("Error sending OTP");
-            System.out.println(rce.getMessage());
+            throw new OtpSendingException("Error sending OTP: " + rce.getMessage());
         } catch (URISyntaxException use) {
-            System.out.println("Error parsing uri; " + endpointURL);
-            System.out.println(use.getMessage());
+            throw new OtpSendingException("Error parsing URI: " + endpointURL + " - " + use.getMessage());
         }
 
-        return responseEntity;
     }
 
     private boolean sendVerifyTemplate(String phoneNumber) {
@@ -181,22 +205,45 @@ public class OtpService {
 
         // Send request
         try {
-            URI uri = new URI(endpointURL);
-            restTemplate.exchange(
-                    uri, HttpMethod.POST,
+            ResponseEntity<String> responseEntity = restTemplate.exchange(
+                    new URI(endpointURL),
+                    HttpMethod.POST,
                     requestEntity,
                     String.class);
 
+            System.out.println(responseEntity.getStatusCode());
+
+            if (responseEntity.getStatusCode() == HttpStatus.OK) {
+                return true;
+            } else {
+                throw new OtpSendingException("Failed to send OTP: " + responseEntity.getBody());
+            }
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.BAD_REQUEST) {
+                throw new OtpSendingException("Bad request: " + "Recepient phone number is not in allowed list");
+            } else if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                throw new OtpSendingException("Sending Service: Unauthorized - " + e.getResponseBodyAsString());
+            } else if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
+                throw new OtpSendingException("Sending Service: Forbidden - " + e.getResponseBodyAsString());
+            } else if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                throw new OtpSendingException("Sending Service: Not found - " + e.getResponseBodyAsString());
+            } else if (e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
+                throw new OtpSendingException("Sending Service: Too many requests - " + e.getResponseBodyAsString());
+            } else if (e.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR) {
+                throw new OtpSendingException(
+                        "Sending Service: Internal server error - " + e.getResponseBodyAsString());
+            } else if (e.getStatusCode() == HttpStatus.BAD_GATEWAY) {
+                throw new OtpSendingException("Sending Service: Bad gateway - " + e.getResponseBodyAsString());
+            } else if (e.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
+                throw new OtpSendingException("Sending Service: Service unavailable - " + e.getResponseBodyAsString());
+            } else {
+                throw new OtpSendingException("Sending Service: Error sending OTP - " + e.getResponseBodyAsString());
+            }
         } catch (RestClientException rce) {
-            System.out.println("Error sending verification template");
-            System.out.println(rce.getMessage());
-            return false;
+            throw new OtpSendingException("Error sending OTP: " + rce.getMessage());
         } catch (URISyntaxException use) {
-            System.out.println("Error parsing uri; " + endpointURL);
-            System.out.println(use.getMessage());
-            return false;
+            throw new OtpSendingException("Error parsing URI: " + endpointURL + " - " + use.getMessage());
         }
 
-        return true;
     }
 }

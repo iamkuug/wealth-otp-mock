@@ -12,6 +12,8 @@ import com.wealth.demo.dto.GenerateResponse;
 import com.wealth.demo.dto.GenericResponse;
 import com.wealth.demo.dto.VerifyRequest;
 import com.wealth.demo.ex.BadRequestException;
+import com.wealth.demo.ex.GoneRequestException;
+import com.wealth.demo.ex.UnauthorizedRequestException;
 
 @RestController
 public class OtpController {
@@ -31,8 +33,8 @@ public class OtpController {
             throw new BadRequestException("Field `phoneNumber` has invalid format");
         }
 
-        if (phoneNumber.length() < 10 || phoneNumber.length() > 15) {
-            throw new BadRequestException("Field `phoneNumber` has invalid length");
+        if (phoneNumber.length() != 12) {
+            throw new BadRequestException("Field `phoneNumber` has invalid length. Ex: 233123456789");
         }
 
         if (!otpService.isPhoneNumberRegisteredOnWhatsapp(phoneNumber)) {
@@ -68,7 +70,11 @@ public class OtpController {
 
         // validate otp
         if (otp.getExpiryDate().before(new Date())) {
-            throw new BadRequestException("OTP has expired");
+            throw new GoneRequestException("OTP has expired");
+        }
+
+        if (!otp.getOtpCode().equals(otpCodeGot)) {
+            throw new UnauthorizedRequestException("OTP is invalid");
         }
 
         return new GenericResponse("OTP verified");

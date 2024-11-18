@@ -9,5 +9,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class ApiError {
     private HttpStatus status;
+    private String statusCode;
+    private String debugMessage;
     private String message;
 }
