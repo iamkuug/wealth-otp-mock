@@ -15,6 +15,7 @@ import com.wealth.demo.ex.BadRequestException;
 import com.wealth.demo.ex.GoneRequestException;
 import com.wealth.demo.ex.UnauthorizedRequestException;
 
+
 @RestController
 public class OtpController {
 
@@ -22,7 +23,8 @@ public class OtpController {
     private OtpService otpService;
 
     @PostMapping("/api/otp/generate")
-    public GenerateResponse generateOTP(@RequestBody GenerateRequest request) {
+    public GenerateResponse generateOTP(
+            @RequestBody GenerateRequest request) {
         String phoneNumber = request.getPhoneNumber();
 
         if (phoneNumber == null || phoneNumber.isEmpty()) {
@@ -41,6 +43,9 @@ public class OtpController {
             throw new BadRequestException("Phone number provided is not registered on whatsapp");
         }
 
+        // purge all expired otps
+        otpService.purgeAllExpiredOtps(phoneNumber);
+
         String otpCode = otpService.generateOtpCode(4);
         String token = otpService.generateToken();
         Date expiryDate = otpService.generateExpiryDate(5);
@@ -54,7 +59,8 @@ public class OtpController {
     }
 
     @PostMapping("/api/otp/verify")
-    public GenericResponse verifyOTP(@RequestBody VerifyRequest request) {
+    public GenericResponse verifyOTP(
+            @RequestBody VerifyRequest request) {
         String otpCodeGot = request.getOtpCode();
         String token = request.getToken();
 
@@ -70,12 +76,16 @@ public class OtpController {
 
         // validate otp
         if (otp.getExpiryDate().before(new Date())) {
+            otpService.deleteOtp(otp);
             throw new GoneRequestException("OTP has expired");
         }
 
         if (!otp.getOtpCode().equals(otpCodeGot)) {
+            otpService.deleteOtp(otp);
             throw new UnauthorizedRequestException("OTP is invalid");
         }
+
+        otpService.deleteOtp(otp);
 
         return new GenericResponse("OTP verified");
     }

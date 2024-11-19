@@ -53,6 +53,20 @@ public class OtpService {
         return otpRepository.save(otp);
     }
 
+    public void purgeAllExpiredOtps(String phoneNumber) {
+        List<Otp> otps = otpRepository.findByPhoneNumber(phoneNumber);
+
+        for (Otp otp : otps) {
+            if (otp.getCreatedAt().before(new Date())) {
+                otpRepository.delete(otp);
+            }
+        }
+    }
+
+    public void deleteOtp(Otp otp) {
+        otpRepository.delete(otp);
+    }
+
     public String generateOtpCode(int length) {
         SecureRandom random = new SecureRandom();
         StringBuilder otpCode = new StringBuilder(length);
