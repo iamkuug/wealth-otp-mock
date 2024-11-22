@@ -9,7 +9,6 @@ import com.wealth.demo.dto.GenericResponse;
 import com.wealth.demo.dto.MessageRequest;
 import com.wealth.demo.ex.BadRequestException;
 
-
 @RestController
 public class MessageController {
 
@@ -25,6 +24,14 @@ public class MessageController {
 
         if (phoneNumber == null || phoneNumber.isEmpty()) {
             throw new BadRequestException("Field `phoneNumber` is required");
+        }
+
+        if (!phoneNumber.matches("\\+?[0-9]+")) {
+            throw new BadRequestException("Field `phoneNumber` has invalid format");
+        }
+
+        if (phoneNumber.length() != 12) {
+            throw new BadRequestException("Field `phoneNumber` has invalid length. Ex: 233123456789");
         }
 
         if (messageBody == null || messageBody.isEmpty()) {
