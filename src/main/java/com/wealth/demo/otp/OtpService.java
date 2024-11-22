@@ -17,7 +17,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import com.wealth.demo.dto.WhatsappRequest;
+import com.wealth.demo.dto.WhatsappTemplateMessageRequest;
 import com.wealth.demo.ex.BadRequestException;
 import com.wealth.demo.ex.OtpSendingException;
 
@@ -106,32 +106,32 @@ public class OtpService {
         headers.set("Content-Type", "application/json");
 
         // Build payload
-        WhatsappRequest whatsappRequest = WhatsappRequest.builder()
+        WhatsappTemplateMessageRequest whatsappRequest = WhatsappTemplateMessageRequest.builder()
                 .messaging_product("whatsapp")
                 .recipient_type("individual")
                 .to(phoneNumber)
                 .type("template")
-                .template(WhatsappRequest.Template.builder()
+                .template(WhatsappTemplateMessageRequest.Template.builder()
                         .name("wealth_otp_test")
-                        .language(WhatsappRequest.Template.Language.builder()
+                        .language(WhatsappTemplateMessageRequest.Template.Language.builder()
                                 .code("en_US")
                                 .build())
                         .components(Arrays.asList(
-                                WhatsappRequest.Template.Component.builder()
+                                WhatsappTemplateMessageRequest.Template.Component.builder()
                                         .type("body")
                                         .parameters(Collections.singletonList(
-                                                WhatsappRequest.Template.Component.Parameter
+                                                WhatsappTemplateMessageRequest.Template.Component.Parameter
                                                         .builder()
                                                         .type("text")
                                                         .text(otpCode)
                                                         .build()))
                                         .build(),
-                                WhatsappRequest.Template.Component.builder()
+                                WhatsappTemplateMessageRequest.Template.Component.builder()
                                         .type("button")
                                         .sub_type("url")
                                         .index(0)
                                         .parameters(Collections.singletonList(
-                                                WhatsappRequest.Template.Component.Parameter
+                                                WhatsappTemplateMessageRequest.Template.Component.Parameter
                                                         .builder()
                                                         .type("text")
                                                         .text(otpCode)
@@ -140,7 +140,7 @@ public class OtpService {
                         .build())
                 .build();
 
-        HttpEntity<WhatsappRequest> requestEntity = new HttpEntity<>(whatsappRequest,
+        HttpEntity<WhatsappTemplateMessageRequest> requestEntity = new HttpEntity<>(whatsappRequest,
                 headers);
 
         // Send request
@@ -196,25 +196,25 @@ public class OtpService {
         headers.set("Content-Type", "application/json");
 
         // Build payload
-        WhatsappRequest whatsappRequest = WhatsappRequest.builder()
+        WhatsappTemplateMessageRequest whatsappRequest = WhatsappTemplateMessageRequest.builder()
                 .messaging_product("whatsapp")
                 .recipient_type("individual")
                 .to(phoneNumber)
                 .type("template")
-                .template(WhatsappRequest.Template.builder()
+                .template(WhatsappTemplateMessageRequest.Template.builder()
                         .name("hello_world")
-                        .language(WhatsappRequest.Template.Language.builder()
+                        .language(WhatsappTemplateMessageRequest.Template.Language.builder()
                                 .code("en_US")
                                 .build())
                         .components(Collections.singletonList(
-                                WhatsappRequest.Template.Component.builder()
+                                WhatsappTemplateMessageRequest.Template.Component.builder()
                                         .type("body")
                                         .parameters(Collections.emptyList())
                                         .build()))
                         .build())
                 .build();
 
-        HttpEntity<WhatsappRequest> requestEntity = new HttpEntity<>(whatsappRequest,
+        HttpEntity<WhatsappTemplateMessageRequest> requestEntity = new HttpEntity<>(whatsappRequest,
                 headers);
 
         // Send request
