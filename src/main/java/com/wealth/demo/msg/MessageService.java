@@ -12,7 +12,8 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.wealth.demo.dto.WhatsappTextMessageRequest;
-import com.wealth.demo.ex.OtpSendingException;
+import com.wealth.demo.ex.MessageSendingException;
+import com.wealth.demo.ex.MessageSendingException;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -76,33 +77,33 @@ public class MessageService {
             if (responseEntity.getStatusCode() == HttpStatus.OK) {
                 return responseEntity;
             } else {
-                throw new OtpSendingException("Failed to send OTP: " + responseEntity.getBody());
+                throw new MessageSendingException("Failed to send message: " + responseEntity.getBody());
             }
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.BAD_REQUEST) {
-                throw new OtpSendingException("Bad request: " + "Recepient phone number is not in allowed list");
+                throw new MessageSendingException("Bad request: " + "Recipient's phone number is not in allowed list");
             } else if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                throw new OtpSendingException("Sending Service: Unauthorized - " + e.getResponseBodyAsString());
+                throw new MessageSendingException("Sending Service: Unauthorized - " + e.getResponseBodyAsString());
             } else if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
-                throw new OtpSendingException("Sending Service: Forbidden - " + e.getResponseBodyAsString());
+                throw new MessageSendingException("Sending Service: Forbidden - " + e.getResponseBodyAsString());
             } else if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                throw new OtpSendingException("Sending Service: Not found - " + e.getResponseBodyAsString());
+                throw new MessageSendingException("Sending Service: Not found - " + e.getResponseBodyAsString());
             } else if (e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
-                throw new OtpSendingException("Sending Service: Too many requests - " + e.getResponseBodyAsString());
+                throw new MessageSendingException("Sending Service: Too many requests - " + e.getResponseBodyAsString());
             } else if (e.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR) {
-                throw new OtpSendingException(
+                throw new MessageSendingException(
                         "Sending Service: Internal server error - " + e.getResponseBodyAsString());
             } else if (e.getStatusCode() == HttpStatus.BAD_GATEWAY) {
-                throw new OtpSendingException("Sending Service: Bad gateway - " + e.getResponseBodyAsString());
+                throw new MessageSendingException("Sending Service: Bad gateway - " + e.getResponseBodyAsString());
             } else if (e.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
-                throw new OtpSendingException("Sending Service: Service unavailable - " + e.getResponseBodyAsString());
+                throw new MessageSendingException("Sending Service: Service unavailable - " + e.getResponseBodyAsString());
             } else {
-                throw new OtpSendingException("Sending Service: Error sending OTP - " + e.getResponseBodyAsString());
+                throw new MessageSendingException("Sending Service: Error sending OTP - " + e.getResponseBodyAsString());
             }
         } catch (RestClientException rce) {
-            throw new OtpSendingException("Error sending OTP: " + rce.getMessage());
+            throw new MessageSendingException("Error sending OTP: " + rce.getMessage());
         } catch (URISyntaxException use) {
-            throw new OtpSendingException("Error parsing URI: " + endpointURL + " - " + use.getMessage());
+            throw new MessageSendingException("Error parsing URI: " + endpointURL + " - " + use.getMessage());
         }
 
     }
