@@ -15,17 +15,17 @@ import com.wealth.demo.ex.BadRequestException;
 import com.wealth.demo.ex.GoneRequestException;
 import com.wealth.demo.ex.UnauthorizedRequestException;
 
-
 @RestController
 public class OtpController {
 
     @Autowired
     private OtpService otpService;
 
-    @PostMapping("/api/otp/generate")
+    @PostMapping("/api/otp/send")
     public GenerateResponse generateOTP(
             @RequestBody GenerateRequest request) {
         String phoneNumber = request.getPhoneNumber();
+        String otpCode = request.getOtpCode();
 
         if (phoneNumber == null || phoneNumber.isEmpty()) {
             throw new BadRequestException("Field `phoneNumber` is required");
@@ -39,14 +39,14 @@ public class OtpController {
             throw new BadRequestException("Field `phoneNumber` has invalid length. Ex: 233123456789");
         }
 
-        if (!otpService.isPhoneNumberRegisteredOnWhatsapp(phoneNumber)) {
-            throw new BadRequestException("Phone number provided is not registered on whatsapp");
-        }
+        // if (!otpService.isPhoneNumberRegisteredOnWhatsapp(phoneNumber)) {
+        // throw new BadRequestException("Phone number provided is not registered on
+        // whatsapp");
+        // }
 
         // purge all expired otps
         otpService.purgeAllExpiredOtps(phoneNumber);
 
-        String otpCode = otpService.generateOtpCode(4);
         String token = otpService.generateToken();
         Date expiryDate = otpService.generateExpiryDate(5);
 
