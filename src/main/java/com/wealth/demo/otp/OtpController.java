@@ -48,7 +48,7 @@ public class OtpController {
         otpService.purgeAllExpiredOtps(phoneNumber);
 
         String token = otpService.generateToken();
-        Date expiryDate = otpService.generateExpiryDate(5);
+        Date expiryDate = otpService.generateExpiryDate(1);
 
         otpService.saveOtp(new Otp(phoneNumber, otpCode, token, expiryDate));
 

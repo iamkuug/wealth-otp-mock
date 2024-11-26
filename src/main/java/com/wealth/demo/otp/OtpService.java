@@ -112,7 +112,7 @@ public class OtpService {
                 .to(phoneNumber)
                 .type("template")
                 .template(WhatsappTemplateMessageRequest.Template.builder()
-                        .name("ic_wealth_otp_template")
+                        .name("ic_wealth_passcode")
                         .language(WhatsappTemplateMessageRequest.Template.Language.builder()
                                 .code("en_US")
                                 .build())
