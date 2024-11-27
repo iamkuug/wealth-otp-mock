@@ -8,10 +8,10 @@
 		<version>3.3.5</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.icsecurities.wealth</groupId>
+	<groupId>com.icsecurities.app</groupId>
 	<artifactId>otp</artifactId>
 	<version>1.0</version>
-    <name>wapp-otp</name>
+    <name>otp-service</name>
 	<url/>
 	<licenses>
 		<license/>
