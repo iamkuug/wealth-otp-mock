@@ -132,7 +132,7 @@ public class OtpService {
 
             switch (statusCode) {
                 case BAD_REQUEST:
-                    throw new OtpSendingException("Bad request: " + "Recipient phone number is not in allowed list");
+                    throw new OtpSendingException("Sending Service: " + "Recipient phone number is not in allowed list");
                 case UNAUTHORIZED:
                     throw new OtpSendingException("Sending Service: Unauthorized - " + e.getResponseBodyAsString());
                 case FORBIDDEN:

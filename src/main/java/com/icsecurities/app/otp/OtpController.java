@@ -31,12 +31,20 @@ public class OtpController {
             throw new BadRequestException("Field `phoneNumber` is required");
         }
 
+        if (otpCode == null || otpCode.isEmpty()) {
+            throw new BadRequestException("Field `otpCode` is required");
+        }
+
         if (!phoneNumber.matches("\\+?[0-9]+")) {
             throw new BadRequestException("Field `phoneNumber` has invalid format");
         }
 
         if (phoneNumber.length() != 12) {
             throw new BadRequestException("Field `phoneNumber` has invalid length. Ex: 233123456789");
+        }
+
+        if (!otpCode.matches("\\d+")) {
+            throw new BadRequestException("Field `otpCode` must contain only numeric values. Ex: 1234");
         }
 
         // if (!otpService.isPhoneNumberRegisteredOnWhatsapp(phoneNumber)) {
