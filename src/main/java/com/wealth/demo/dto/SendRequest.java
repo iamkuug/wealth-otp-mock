@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class GenerateRequest {
+public class SendRequest {
     String phoneNumber;
     String otpCode;
 }

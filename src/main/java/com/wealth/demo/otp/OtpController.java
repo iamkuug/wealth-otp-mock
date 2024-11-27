@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.wealth.demo.dto.GenerateRequest;
-import com.wealth.demo.dto.GenerateResponse;
+import com.wealth.demo.dto.SendRequest;
+import com.wealth.demo.dto.SendResponse;
 import com.wealth.demo.dto.GenericResponse;
 import com.wealth.demo.dto.VerifyRequest;
 import com.wealth.demo.ex.BadRequestException;
@@ -22,8 +22,8 @@ public class OtpController {
     private OtpService otpService;
 
     @PostMapping("/api/otp/send")
-    public GenerateResponse generateOTP(
-            @RequestBody GenerateRequest request) {
+    public SendResponse generateOTP(
+            @RequestBody SendRequest request) {
         String phoneNumber = request.getPhoneNumber();
         String otpCode = request.getOtpCode();
 
@@ -54,7 +54,7 @@ public class OtpController {
 
         otpService.sendOtp(phoneNumber, otpCode);
 
-        return new GenerateResponse(token);
+        return new SendResponse(token);
 
     }
 
